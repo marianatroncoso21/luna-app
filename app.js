@@ -135,7 +135,7 @@ async function loadToday(lat, lon, locationLabel) {
 
     document.getElementById('location-note').textContent = `Según tu ubicación: ${locationLabel}`;
   } catch (err) {
-    document.getElementById('location-note').textContent = 'No se pudo calcular. Intenta de nuevo.';
+    document.getElementById('location-note').textContent = `Error: ${err.message || err}`;
     console.error(err);
   }
 }
