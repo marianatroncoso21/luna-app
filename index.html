@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Luna Diaria</title>
+<meta name="description" content="Fase lunar, signo zodiacal, visibilidad y brújula según tu ubicación" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0B1026" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Luna" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <span class="eyebrow" id="date-label">— · —</span>
+  </header>
+
+  <main id="view-hoy" class="view">
+
+    <section class="dial-wrap">
+      <svg id="moon-dial" viewBox="0 0 320 320" class="moon-dial">
+        <circle class="ring" cx="160" cy="160" r="148"></circle>
+        <g id="ring-ticks"></g>
+        <g id="moon-disc-group" transform="translate(160,160)">
+          <circle r="86" class="disc-base"></circle>
+          <path id="lit-path" class="disc-lit"></path>
+          <circle r="86" class="disc-outline"></circle>
+        </g>
+      </svg>
+      <div class="dial-readout">
+        <span id="illum-pct" class="illum-pct">—%</span>
+        <span class="illum-label">iluminada</span>
+      </div>
+    </section>
+
+    <h1 id="phase-name" class="phase-name">Calculando…</h1>
+
+    <section class="card sign-card">
+      <div class="sign-row">
+        <span id="sign-symbol" class="sign-symbol">—</span>
+        <div class="sign-text">
+          <span class="eyebrow">Luna en</span>
+          <span id="sign-name" class="sign-name">—</span>
+        </div>
+      </div>
+      <p id="horoscope-text" class="horoscope-text">—</p>
+    </section>
+
+    <section class="card times-card">
+      <div class="time-row">
+        <span class="time-label">Salida</span>
+        <span id="moonrise" class="time-value">—:—</span>
+      </div>
+      <div class="divider"></div>
+      <div class="time-row">
+        <span class="time-label">Puesta</span>
+        <span id="moonset" class="time-value">—:—</span>
+      </div>
+    </section>
+
+    <p id="location-note" class="location-note">Ubicando…</p>
+
+  </main>
+
+  <main id="view-brujula" class="view hidden">
+    <section class="compass-wrap">
+      <svg id="compass-svg" viewBox="0 0 320 320" class="compass-svg">
+        <circle class="ring" cx="160" cy="160" r="148"></circle>
+        <g id="compass-ticks"></g>
+        <text x="160" y="42" class="compass-dir">N</text>
+        <text x="278" y="166" class="compass-dir">E</text>
+        <text x="160" y="290" class="compass-dir">S</text>
+        <text x="42" y="166" class="compass-dir">O</text>
+        <g id="needle-group" transform="translate(160,160)">
+          <polygon points="0,-100 10,10 -10,10" class="needle-north"></polygon>
+          <polygon points="0,100 10,-10 -10,-10" class="needle-south"></polygon>
+          <circle r="10" class="needle-hub"></circle>
+        </g>
+      </svg>
+      <div class="dial-readout">
+        <span id="heading-deg" class="illum-pct">—°</span>
+        <span id="heading-cardinal" class="illum-label">—</span>
+      </div>
+    </section>
+    <button id="compass-btn" class="btn">Activar brújula</button>
+    <p id="compass-note" class="location-note">Necesita permiso de orientación del dispositivo.</p>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="hoy">
+      <span class="tab-icon">☾</span><span>Hoy</span>
+    </button>
+    <button class="tab" data-view="brujula">
+      <span class="tab-icon">◈</span><span>Brújula</span>
+    </button>
+  </nav>
+
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

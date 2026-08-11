@@ -1,0 +1,229 @@
+:root {
+  --bg-deep: #0b1026;
+  --bg-card: #141a35;
+  --bg-card-border: #262d54;
+  --moon-silver: #eee9f5;
+  --moon-shadow: #0b1026;
+  --accent-gold: #c9a15c;
+  --accent-gold-dim: #8a7143;
+  --accent-violet: #8b7ec8;
+  --text-primary: #f1eef8;
+  --text-muted: #8b8fb0;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(120% 90% at 50% -10%, #1a2150 0%, var(--bg-deep) 55%);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: calc(var(--safe-top) + 12px);
+  padding-bottom: calc(var(--safe-bottom) + 78px);
+}
+
+.topbar {
+  padding: 0 24px 4px;
+}
+
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.view { padding: 0 24px; }
+.view.hidden { display: none; }
+
+/* ---- Moon dial (signature element) ---- */
+.dial-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 18px auto 6px;
+}
+.moon-dial, .compass-svg { width: 100%; height: 100%; overflow: visible; }
+
+.ring {
+  fill: none;
+  stroke: var(--accent-gold-dim);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.disc-base { fill: var(--moon-shadow); }
+.disc-lit { fill: var(--moon-silver); }
+.disc-outline {
+  fill: none;
+  stroke: var(--accent-gold);
+  stroke-width: 1.5;
+  opacity: 0.8;
+}
+
+.dial-readout {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.illum-pct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-shadow: 0 0 18px rgba(0,0,0,0.6);
+}
+.illum-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-shadow: 0 0 12px rgba(0,0,0,0.6);
+}
+
+.phase-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 450;
+  font-size: 28px;
+  text-align: center;
+  margin: 8px 0 22px;
+  letter-spacing: -0.01em;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.sign-row { display: flex; align-items: center; gap: 14px; }
+.sign-symbol {
+  font-size: 34px;
+  color: var(--accent-gold);
+  font-family: 'Fraunces', serif;
+  line-height: 1;
+}
+.sign-text { display: flex; flex-direction: column; gap: 2px; }
+.sign-name {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+}
+.horoscope-text {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.times-card { display: flex; flex-direction: column; padding: 8px 20px; }
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+.time-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.time-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  color: var(--accent-violet);
+}
+.divider { height: 1px; background: var(--bg-card-border); }
+
+.location-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ---- Compass ---- */
+.compass-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 28px auto 14px;
+}
+.compass-dir {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  fill: var(--text-muted);
+  text-anchor: middle;
+}
+#needle-group { transition: transform 0.15s ease-out; }
+.needle-north { fill: var(--accent-gold); }
+.needle-south { fill: var(--bg-card-border); }
+.needle-hub { fill: var(--moon-silver); }
+
+.btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 10px auto 0;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--accent-gold-dim);
+  background: transparent;
+  color: var(--accent-gold);
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.btn:active { background: rgba(201,161,92,0.12); }
+
+/* ---- Tab bar ---- */
+.tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  padding: 10px 24px calc(var(--safe-bottom) + 10px);
+  background: rgba(11,16,38,0.85);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--bg-card-border);
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Sora', sans-serif;
+  font-size: 11px;
+  padding: 4px 0;
+}
+.tab-icon { font-size: 20px; }
+.tab.active { color: var(--accent-gold); }
+
+@media (prefers-reduced-motion: reduce) {
+  #needle-group { transition: none; }
+}
