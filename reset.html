@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reset Luna Diaria</title>
+<style>
+  body { font-family: sans-serif; background: #0b1026; color: #f1eef8; padding: 40px 24px; text-align: center; }
+  a { color: #c9a15c; }
+</style>
+</head>
+<body>
+<h1>Reiniciando Luna Diaria…</h1>
+<p id="status">Borrando caché y service worker de esta app (solo esta, no afecta tus otras PWAs)…</p>
+<p><a href="./index.html">Ir a la app</a> (espera al mensaje de abajo primero)</p>
+
+<script>
+async function reset() {
+  const status = document.getElementById('status');
+  let log = [];
+
+  // Solo desregistra service workers cuyo scope pertenece a /luna-app/
+  const regs = await navigator.serviceWorker.getRegistrations();
+  for (const reg of regs) {
+    if (reg.scope.includes('/luna-app/')) {
+      await reg.unregister();
+      log.push('Service worker de luna-app eliminado.');
+    }
+  }
+
+  // Solo borra caches cuyo nombre empiece con "luna-diaria"
+  const keys = await caches.keys();
+  for (const key of keys) {
+    if (key.startsWith('luna-diaria')) {
+      await caches.delete(key);
+      log.push(`Caché "${key}" eliminada.`);
+    }
+  }
+
+  if (log.length === 0) {
+    log.push('No había nada que borrar (ya estaba limpio).');
+  }
+
+  status.textContent = log.join(' ') + ' Listo. Ahora toca "Ir a la app".';
+}
+
+reset().catch(err => {
+  document.getElementById('status').textContent = 'Error: ' + err.message;
+});
+</script>
+</body>
+</html>
