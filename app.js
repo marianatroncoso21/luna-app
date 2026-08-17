@@ -30,6 +30,8 @@ const PHASES = [
 ];
 
 const FALLBACK_COORDS = { lat: 19.4326, lon: -99.1332, label: 'Ciudad de México (por defecto)' };
+let currentLat = FALLBACK_COORDS.lat;
+let currentLon = FALLBACK_COORDS.lon;
 
 // ---------- Helpers de cálculo ----------
 
@@ -112,6 +114,8 @@ function drawRingTicks() {
 }
 
 async function loadToday(lat, lon, locationLabel) {
+  currentLat = lat;
+  currentLon = lon;
   document.getElementById('date-label').textContent =
     new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -135,7 +139,7 @@ async function loadToday(lat, lon, locationLabel) {
 
     document.getElementById('location-note').textContent = `Según tu ubicación: ${locationLabel}`;
   } catch (err) {
-    document.getElementById('location-note').textContent = `Error: ${err.message || err}`;
+    document.getElementById('location-note').textContent = 'No se pudo calcular. Intenta de nuevo.';
     console.error(err);
   }
 }
@@ -178,6 +182,38 @@ function cardinalFor(heading) {
   return CARDINALS[Math.round(heading / 45) % 8];
 }
 
+let lastMoonAzimuth = null;
+let lastMoonAltitude = null;
+let moonHorizonInterval = null;
+
+function updateMoonHorizon() {
+  try {
+    const time = Astronomy.MakeTime(new Date());
+    const observer = new Astronomy.Observer(currentLat, currentLon, 0);
+    const eq = Astronomy.Equator(Astronomy.Body.Moon, time, observer, true, true);
+    const hor = Astronomy.Horizon(time, observer, eq.ra, eq.dec, 'normal');
+    lastMoonAzimuth = hor.azimuth;
+    lastMoonAltitude = hor.altitude;
+    positionMoonMarker(currentHeading || 0);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function positionMoonMarker(heading) {
+  if (lastMoonAzimuth === null) return;
+  const relativeAngle = lastMoonAzimuth - heading;
+  document.getElementById('moon-marker-group').setAttribute('transform', `translate(160,160) rotate(${relativeAngle})`);
+  const altLabel = document.getElementById('moon-marker-alt');
+  altLabel.textContent = `${lastMoonAltitude.toFixed(0)}°`;
+  const marker = document.querySelector('.moon-marker-disc');
+  const isVisible = lastMoonAltitude > 0;
+  marker.style.opacity = isVisible ? '1' : '0.35';
+  document.querySelector('.moon-marker-line').style.opacity = isVisible ? '0.7' : '0.25';
+}
+
+let currentHeading = 0;
+
 function handleOrientation(event) {
   let heading;
   if (typeof event.webkitCompassHeading === 'number') {
@@ -188,10 +224,12 @@ function handleOrientation(event) {
     heading = 360 - event.alpha;
   }
   if (heading === undefined || Number.isNaN(heading)) return;
+  currentHeading = heading;
 
   document.getElementById('needle-group').setAttribute('transform', `translate(160,160) rotate(${-heading})`);
   document.getElementById('heading-deg').textContent = `${Math.round(heading)}°`;
   document.getElementById('heading-cardinal').textContent = cardinalFor(heading);
+  positionMoonMarker(heading);
 }
 
 async function activateCompass() {
@@ -209,7 +247,10 @@ async function activateCompass() {
     }
   }
   window.addEventListener('deviceorientation', handleOrientation, true);
-  note.textContent = 'Brújula activa. Aléjate de imanes o metal para mayor precisión.';
+  updateMoonHorizon();
+  if (moonHorizonInterval) clearInterval(moonHorizonInterval);
+  moonHorizonInterval = setInterval(updateMoonHorizon, 60000);
+  note.textContent = 'El punto dorado marca dónde está la Luna. Se atenúa si está bajo el horizonte.';
   document.getElementById('compass-btn').textContent = 'Brújula activada';
 }
 
@@ -223,7 +264,154 @@ function initTabs() {
       tab.classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
       document.getElementById(`view-${tab.dataset.view}`).classList.remove('hidden');
+      if (tab.dataset.view === 'calendario') renderCalendar();
+      if (tab.dataset.view !== 'brujula' && moonHorizonInterval) {
+        clearInterval(moonHorizonInterval);
+        moonHorizonInterval = null;
+      }
     });
+  });
+}
+
+// ---------- Calendario ----------
+
+let calYear, calMonth; // month: 0-11
+let calMode = 'fases';
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function miniMoonSvg(phaseAngleDeg) {
+  const p = ((phaseAngleDeg % 360) + 360) % 360 / 360;
+  const R = 40;
+  const theta = p * 2 * Math.PI;
+  const rx = Math.abs(R * Math.cos(theta));
+  let sweep1, sweep2;
+  if (p < 0.25)      { sweep1 = 1; sweep2 = 1; }
+  else if (p < 0.5)   { sweep1 = 0; sweep2 = 1; }
+  else if (p < 0.75)  { sweep1 = 1; sweep2 = 0; }
+  else                { sweep1 = 0; sweep2 = 0; }
+  const d = `M 0,${-R} A ${rx},${R} 0 0,${sweep1} 0,${R} A ${R},${R} 0 0,${sweep2} 0,${-R} Z`;
+  return `<svg viewBox="-44 -44 88 88"><circle r="40" fill="var(--moon-shadow)"></circle><path d="${d}" fill="var(--moon-silver)"></path><circle r="40" fill="none" stroke="var(--accent-gold)" stroke-width="2" opacity="0.7"></circle></svg>`;
+}
+
+function buildMonthGrid(year, month) {
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = firstOfMonth.getDay(); // 0=Dom
+  const gridStart = new Date(year, month, 1 - startOffset);
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    cells.push(d);
+  }
+  return cells;
+}
+
+function findMonthEvents(year, month) {
+  // Encuentra lunas nuevas y llenas dentro del rango visible del grid.
+  const events = []; // {dateKey, label, timeStr}
+  const rangeStart = Astronomy.MakeTime(new Date(year, month, 1, 0, 0, 0));
+  const rangeEndDate = new Date(year, month + 1, 7); // margen
+  [0, 180].forEach((targetLon) => {
+    let t = rangeStart;
+    for (let i = 0; i < 4; i++) {
+      let found;
+      try {
+        found = Astronomy.SearchMoonPhase(targetLon, t, 40);
+      } catch (e) { break; }
+      if (!found || found.date > rangeEndDate) break;
+      const dateKey = found.date.toDateString();
+      events.push({
+        dateKey,
+        label: targetLon === 0 ? 'Luna Nueva' : 'Luna Llena',
+        timeStr: found.date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+      });
+      t = Astronomy.MakeTime(new Date(found.date.getTime() + 24 * 3600 * 1000));
+    }
+  });
+  return events;
+}
+
+function renderCalendar() {
+  const today = new Date();
+  if (calYear === undefined) { calYear = today.getFullYear(); calMonth = today.getMonth(); }
+
+  document.getElementById('cal-month-label').textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+
+  const cells = buildMonthGrid(calYear, calMonth);
+  const events = findMonthEvents(calYear, calMonth);
+  const eventsByDate = {};
+  events.forEach(e => { eventsByDate[e.dateKey] = e; });
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  cells.forEach((d) => {
+    const isOutside = d.getMonth() !== calMonth;
+    const isToday = d.toDateString() === today.toDateString();
+    const noon = new Date(d); noon.setHours(12, 0, 0, 0);
+    const time = Astronomy.MakeTime(noon);
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isOutside ? ' outside' : '') + (isToday ? ' today' : '');
+
+    const dayNum = document.createElement('span');
+    dayNum.className = 'cal-day-num';
+    dayNum.textContent = d.getDate();
+    cell.appendChild(dayNum);
+
+    if (calMode === 'fases') {
+      const angle = Astronomy.MoonPhase(time);
+      const wrap = document.createElement('div');
+      wrap.innerHTML = miniMoonSvg(angle);
+      cell.appendChild(wrap.firstChild);
+
+      const ev = eventsByDate[d.toDateString()];
+      if (ev) {
+        cell.classList.add('event');
+        const label = document.createElement('span');
+        label.className = 'cal-event-time';
+        label.textContent = ev.timeStr;
+        cell.appendChild(label);
+      }
+    } else {
+      const eclip = Astronomy.EclipticGeoMoon(time);
+      const sign = getZodiacSign(eclip.lon);
+      const symbol = document.createElement('span');
+      symbol.className = 'cal-sign-symbol';
+      symbol.textContent = sign.symbol;
+      const abbr = document.createElement('span');
+      abbr.className = 'cal-sign-abbr';
+      abbr.textContent = sign.name.slice(0, 3);
+      cell.appendChild(symbol);
+      cell.appendChild(abbr);
+    }
+
+    grid.appendChild(cell);
+  });
+}
+
+function initCalendarControls() {
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+  document.getElementById('cal-mode-fases').addEventListener('click', () => {
+    calMode = 'fases';
+    document.getElementById('cal-mode-fases').classList.add('active');
+    document.getElementById('cal-mode-signos').classList.remove('active');
+    renderCalendar();
+  });
+  document.getElementById('cal-mode-signos').addEventListener('click', () => {
+    calMode = 'signos';
+    document.getElementById('cal-mode-signos').classList.add('active');
+    document.getElementById('cal-mode-fases').classList.remove('active');
+    renderCalendar();
   });
 }
 
@@ -231,6 +419,7 @@ function initTabs() {
 
 drawCompassTicks();
 initTabs();
+initCalendarControls();
 initLocationAndLoad();
 document.getElementById('compass-btn').addEventListener('click', activateCompass);
 

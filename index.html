@@ -80,6 +80,13 @@
         <text x="278" y="166" class="compass-dir">E</text>
         <text x="160" y="290" class="compass-dir">S</text>
         <text x="42" y="166" class="compass-dir">O</text>
+        <g id="moon-marker-group" transform="translate(160,160)">
+          <line x1="0" y1="0" x2="0" y2="-134" class="moon-marker-line"></line>
+          <g transform="translate(0,-134)">
+            <circle r="11" class="moon-marker-disc"></circle>
+            <text y="-16" class="moon-marker-label" id="moon-marker-alt">—°</text>
+          </g>
+        </g>
         <g id="needle-group" transform="translate(160,160)">
           <polygon points="0,-100 10,10 -10,10" class="needle-north"></polygon>
           <polygon points="0,100 10,-10 -10,-10" class="needle-south"></polygon>
@@ -92,7 +99,23 @@
       </div>
     </section>
     <button id="compass-btn" class="btn">Activar brújula</button>
-    <p id="compass-note" class="location-note">Necesita permiso de orientación del dispositivo.</p>
+    <p id="compass-note" class="location-note">Activa la brújula para ver tu orientación y dónde está la Luna.</p>
+  </main>
+
+  <main id="view-calendario" class="view hidden">
+    <div class="cal-header">
+      <button id="cal-prev" class="cal-nav">‹</button>
+      <span id="cal-month-label" class="cal-month-label">—</span>
+      <button id="cal-next" class="cal-nav">›</button>
+    </div>
+    <div class="cal-toggle">
+      <button id="cal-mode-fases" class="cal-toggle-btn active">Fases</button>
+      <button id="cal-mode-signos" class="cal-toggle-btn">Signos</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+    </div>
+    <div id="cal-grid" class="cal-grid"></div>
   </main>
 
   <nav class="tabbar">
@@ -101,6 +124,9 @@
     </button>
     <button class="tab" data-view="brujula">
       <span class="tab-icon">◈</span><span>Brújula</span>
+    </button>
+    <button class="tab" data-view="calendario">
+      <span class="tab-icon">▦</span><span>Calendario</span>
     </button>
   </nav>
 
