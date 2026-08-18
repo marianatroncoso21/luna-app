@@ -85,11 +85,12 @@ function renderMoonDisc(phaseAngleDeg) {
   const rx = Math.abs(R * Math.cos(theta));
 
   // Los "sweep flags" determinan de qué lado se curva cada arco según el cuarto de fase.
+  // Tabla verificada matemáticamente (área + lado) contra la fórmula real de arcos SVG.
   let sweep1, sweep2;
-  if (p < 0.25)      { sweep1 = 1; sweep2 = 1; }
-  else if (p < 0.5)   { sweep1 = 0; sweep2 = 1; }
-  else if (p < 0.75)  { sweep1 = 1; sweep2 = 0; }
-  else                { sweep1 = 0; sweep2 = 0; }
+  if (p < 0.25)      { sweep1 = 1; sweep2 = 0; }
+  else if (p < 0.5)   { sweep1 = 0; sweep2 = 0; }
+  else if (p < 0.75)  { sweep1 = 1; sweep2 = 1; }
+  else                { sweep1 = 0; sweep2 = 1; }
 
   const d = `M 0,${-R} A ${rx},${R} 0 0,${sweep1} 0,${R} A ${R},${R} 0 0,${sweep2} 0,${-R} Z`;
   document.getElementById('lit-path').setAttribute('d', d);
@@ -285,10 +286,10 @@ function miniMoonSvg(phaseAngleDeg) {
   const theta = p * 2 * Math.PI;
   const rx = Math.abs(R * Math.cos(theta));
   let sweep1, sweep2;
-  if (p < 0.25)      { sweep1 = 1; sweep2 = 1; }
-  else if (p < 0.5)   { sweep1 = 0; sweep2 = 1; }
-  else if (p < 0.75)  { sweep1 = 1; sweep2 = 0; }
-  else                { sweep1 = 0; sweep2 = 0; }
+  if (p < 0.25)      { sweep1 = 1; sweep2 = 0; }
+  else if (p < 0.5)   { sweep1 = 0; sweep2 = 0; }
+  else if (p < 0.75)  { sweep1 = 1; sweep2 = 1; }
+  else                { sweep1 = 0; sweep2 = 1; }
   const d = `M 0,${-R} A ${rx},${R} 0 0,${sweep1} 0,${R} A ${R},${R} 0 0,${sweep2} 0,${-R} Z`;
   return `<svg viewBox="-44 -44 88 88"><circle r="40" fill="var(--moon-shadow)"></circle><path d="${d}" fill="var(--moon-silver)"></path><circle r="40" fill="none" stroke="var(--accent-gold)" stroke-width="2" opacity="0.7"></circle></svg>`;
 }
